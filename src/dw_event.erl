@@ -31,15 +31,15 @@
 -export ([init/1, terminate/2, code_change/3]).
 -export ([handle_call/3, handle_cast/2, handle_info/2]).
 % external-ish API
--export ([send_event/2, register_pid/3, unregister_pid/2, registered_name/1, set_permission_module/2]).
+-export ([send_event/3, register_pid/3, unregister_pid/2, registered_name/1, set_permission_module/2]).
 
 -record (state, {event_module, permission_module, watchers = []}).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%
 % External-ish API
 %%%%%%%%%%%%%%%%%%%%%%%%%%%
-send_event (EventModule, Event) ->
-    gen_server:call(registered_name(EventModule), {send, Event}).
+send_event (EventModule, Pid, Event) ->
+    gen_server:call(registered_name(EventModule), {send, Pid, Event}).
 
 register_pid (EventModule, Pid, ClientInfo) ->
     gen_server:call(registered_name(EventModule), {register, Pid, ClientInfo}).
@@ -76,8 +76,8 @@ handle_call ({register, Pid, ClientInfo}, _From, State) ->
 handle_call ({unregister, Pid}, _From, State) ->
     {Response, NewState} = i_unregister_pid(Pid, State),
     {reply, Response, NewState};
-handle_call ({send, Event}, _From, State) ->
-    {Response, NewState} = i_send(Event, State),
+handle_call ({send, Pid, Event}, _From, State) ->
+    {Response, NewState} = i_send(Event, Pid, State),
     {reply, Response, NewState};
 handle_call ({permissions, PermissionModule}, _From, State) ->
     % TODO: run all existing watchers through can_register?
@@ -115,13 +115,13 @@ i_unregister_pid(Pid, State) ->
 
 % Send a message while filtering it through a permission module
 % TODO: we may want it to filter and send individually instead of collecting all messages, then sending
-i_send(Event, State = #state{ permission_module = PM }) when PM =/= undefined ->
+i_send(Event, Pid, State = #state{ permission_module = PM }) when PM =/= undefined ->
     Messages = [ {Pid, PM:filter_event(State#state.event_module, Event, ClientInfo)} || {Pid, ClientInfo} <- State#state.watchers ],
-    [ Pid ! {dw_event, State#state.event_module, Message} || {Pid, {ok, Message}} <- Messages ],
+    [ Pid ! {dw_event, State#state.event_module, Pid, Message} || {Pid, {ok, Message}} <- Messages ],
     {ok, State};
 
 % Version without a permission module installed
-i_send(Event, State) ->
-    [ Pid ! {dw_event, State#state.event_module, Event} || {Pid, _} <- State#state.watchers ],
+i_send(Event, Pid, State) ->
+    [ Pid ! {dw_event, State#state.event_module, Pid, Event} || {Pid, _} <- State#state.watchers ],
     {ok, State}.
 

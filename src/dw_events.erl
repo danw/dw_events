@@ -25,7 +25,7 @@
 
 -module (dw_events).
 
--export ([register_module/1, register_module/2, register_pid/2, unregister_pid/1]).
+-export ([register_module/1, register_module/2, register_pid/2, unregister_pid/1, send/2]).
 
 register_module (EventModule) when is_atom(EventModule) ->
     register_module(EventModule, undefined).
@@ -46,3 +46,6 @@ register_pid (EventModule, ClientInfo) ->
 
 unregister_pid (EventModule) ->
     dw_events_sup:unregister_pid(EventModule, self()).
+
+send (EventModule, Event) ->
+    dw_events_sup:send_event(EventModule, self, Event).

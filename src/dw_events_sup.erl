@@ -29,7 +29,7 @@
 % supervisor calls
 -export ([start_link/1, init/1]).
 % API
--export ([register_module/2, register_pid/3, unregister_pid/2]).
+-export ([register_module/2, register_pid/3, unregister_pid/2, send_event/3]).
 
 start_link (Args) ->
     supervisor:start_link({local,?MODULE}, ?MODULE, Args).
@@ -52,17 +52,24 @@ register_module (EventModule, PermissionModule) ->
     end.
 
 register_pid (EventModule, Pid, ClientInfo) ->
-    case module_running(EventModule) of
-        true -> dw_event:register_pid(EventModule, Pid, ClientInfo);
-        false ->
-            register_module(EventModule, undefined),
-            dw_event:register_pid(EventModule, Pid, ClientInfo)
-    end.
+    ensure_module_running(EventModule),
+    dw_event:register_pid(EventModule, Pid, ClientInfo).
 
 unregister_pid (EventModule, Pid) ->
     case module_running(EventModule) of
         true -> dw_event:unregister_pid(EventModule, Pid);
         _ -> ok
+    end.
+
+send_event (EventModule, Pid, Event) ->
+    ensure_module_running(EventModule),
+    dw_event:send_event(EventModule, Pid, Event).
+
+ensure_module_running (EventModule) ->
+    case module_running(EventModule) of
+        true -> ok;
+        false ->
+            register_module(EventModule, undefined)
     end.
 
 module_running (EventModule) ->
