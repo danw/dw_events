@@ -1,0 +1,12 @@
+{application, dw_events,
+ [{description, "My Event Distributor"},
+  {vsn, "1.0"},
+  {modules, [dw_events_app,
+             dw_events_sup,
+             dw_events,
+             dw_event]},
+  {registered,[]},
+  {applications, [kernel, stdlib, sasl]},
+  {mod, {dw_events_app, []}},
+  {start_phases, []}
+]}.
