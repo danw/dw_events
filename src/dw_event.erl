@@ -51,7 +51,7 @@ set_permission_module (EventModule, PermissionModule) ->
     gen_server:call(registered_name(EventModule), {permissions, PermissionModule}).
 
 registered_name (EventModule) ->
-    list_to_atom("dw_event_" + atom_to_list(EventModule)).
+    list_to_atom("dw_event_" ++ atom_to_list(EventModule)).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Internal API
@@ -115,13 +115,13 @@ i_unregister_pid(Pid, State) ->
 
 % Send a message while filtering it through a permission module
 % TODO: we may want it to filter and send individually instead of collecting all messages, then sending
-i_send(Event, Pid, State = #state{ permission_module = PM }) when PM =/= undefined ->
+i_send(Event, FromPid, State = #state{ permission_module = PM }) when PM =/= undefined ->
     Messages = [ {Pid, PM:filter_event(State#state.event_module, Event, ClientInfo)} || {Pid, ClientInfo} <- State#state.watchers ],
-    [ Pid ! {dw_event, State#state.event_module, Pid, Message} || {Pid, {ok, Message}} <- Messages ],
+    [ Pid ! {dw_event, State#state.event_module, FromPid, Message} || {Pid, {ok, Message}} <- Messages ],
     {ok, State};
 
 % Version without a permission module installed
-i_send(Event, Pid, State) ->
-    [ Pid ! {dw_event, State#state.event_module, Pid, Event} || {Pid, _} <- State#state.watchers ],
+i_send(Event, FromPid, State) ->
+    [ Pid ! {dw_event, State#state.event_module, FromPid, Event} || {Pid, _} <- State#state.watchers ],
     {ok, State}.
 
