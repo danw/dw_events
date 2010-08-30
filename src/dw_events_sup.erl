@@ -74,4 +74,4 @@ ensure_module_running (EventModule) ->
 
 module_running (EventModule) ->
     Children = [ process_info(Pid, registered_name) || {_, Pid, _, _} <- supervisor:which_children(?MODULE) ],
-    lists:member(dw_event:registered_name(EventModule), Children).
+    lists:member({registered_name, dw_event:registered_name(EventModule)}, Children).
