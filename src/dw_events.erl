@@ -48,4 +48,4 @@ unregister_pid (EventModule) ->
     dw_events_sup:unregister_pid(EventModule, self()).
 
 send (EventModule, Event) ->
-    dw_events_sup:send_event(EventModule, self, Event).
+    dw_events_sup:send_event(EventModule, self(), Event).

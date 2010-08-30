@@ -116,7 +116,7 @@ i_unregister_pid(Pid, State) ->
 % Send a message while filtering it through a permission module
 % TODO: we may want it to filter and send individually instead of collecting all messages, then sending
 i_send(Event, FromPid, State = #state{ permission_module = PM }) when PM =/= undefined ->
-    Messages = [ {Pid, PM:filter_event(State#state.event_module, Event, ClientInfo)} || {Pid, ClientInfo} <- State#state.watchers ],
+    Messages = [ {Pid, PM:filter_event(State#state.event_module, FromPid, ClientInfo, Event)} || {Pid, ClientInfo} <- State#state.watchers ],
     [ Pid ! {dw_event, State#state.event_module, FromPid, Message} || {Pid, {ok, Message}} <- Messages ],
     {ok, State};
 

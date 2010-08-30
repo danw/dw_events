@@ -29,5 +29,5 @@
 
 behaviour_info(callbacks) ->
     [{can_register, 2},
-     {filter_event, 3}];
+     {filter_event, 4}];
 behaviour_info(_) -> undefined.
